@@ -24,7 +24,7 @@
       Here the term Keep_prob = 0.6 means DropOut,
             That means if keep_prob = 0.6 then 40 % of nodes are dropped in the layers during training of the model .
             If you set keet_prob = 0.8 then 20 % of nodes are dropped in your layers during the training of the model .
-            FYI => Dropout technique is used to prevent overfitting in the model.So it is not applied during test set.
+            FYI => Dropout technique is used to prevent overfitting in the model.So it can't be implement during test set.
             
       Also you can tune batch size , learning rate ,epochs and beta.
             
