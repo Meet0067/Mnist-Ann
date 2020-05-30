@@ -19,7 +19,7 @@
            ,if you want adam then
             optimizer = "adam" 
             ,and if you want momentum then
-            optimier = "momentum".
+            optimizer = "momentum".
             
       Here the term Keep_prob = 0.6 means DropOut,
             That means if keep_prob = 0.6 then 40 % of nodes are dropped in the layers during training of the model .
