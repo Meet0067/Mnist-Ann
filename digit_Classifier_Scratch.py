@@ -21,7 +21,7 @@ y_train = ohe.fit_transform(y_train)
 y_test = ohe.transform(y_test)
 
 from sklearn.model_selection import train_test_split
-X_train,X_val,y_train,y_val = train_test_split(X_train,y_train,test_size = 0.1)
+X_train,X_val,y_train,y_val = train_test_split(X_train,y_train,test_size = 0.175)
 
 X_train = X_train / 255
 X_test  = X_test  / 255
@@ -146,10 +146,29 @@ def compute_cost(AL,Y):
     
     return cost
 
-def linear_backward(dZ,cache):
+def compute_cost_with_regularization(AL, Y, parameters, lambd=0.1):
+    
+    m = Y.shape[1]
+    L= len(parameters) // 2
+    W1 = parameters["W1"].T
+    
+    sum_ = np.sum(np.square(W1))
+    for l in range(2,L+1):   
+      sum_ = sum_ + np.sum(np.square(parameters['W'+str(l)+'']))   
+
+    
+    cross_entropy_cost = compute_cost(AL, Y) # This gives you the cross-entropy part of the cost
+    
+    L2_regularization_cost =  (1/m)*(sum_)
+    
+    cost = cross_entropy_cost + L2_regularization_cost
+    
+    return cost
+
+def linear_backward(dZ,cache,lambd = 0.1):
     A_prev, W, b = cache
     m = A_prev.shape[1]  
-    dW = (1/m)*np.dot(dZ,A_prev.T)
+    dW = (1/m)*np.dot(dZ,A_prev.T) + (lambd/m)*W
     db = (1/m)*(np.sum(dZ,axis=1,keepdims=True))
     dA_prev = np.dot(W.T,dZ)    
    
@@ -170,7 +189,7 @@ def linear_activation_backward(dA,cache,activation,D,keep_prob = 1):
     
     return dA_prev, dW, db
     
-def L_model_backward(AL,Y,caches,Ds,keep_prob):
+def L_model_backward(AL,Y,caches,Ds,keep_prob,lambd = 0.1):
     grads = {}
     L = len(caches)         # the number of layers
     m = AL.shape[1]
@@ -184,7 +203,7 @@ def L_model_backward(AL,Y,caches,Ds,keep_prob):
     linear_cache, activation_cache = current_cache
     A_prev, W, b  = linear_cache
     dZ = AL - Y    
-    dW = dZ.dot(A_prev.T) / m
+    dW = dZ.dot(A_prev.T) / m + (lambd/m)*W
     db = np.sum(dZ, axis=1, keepdims=True) / m
     dAPrev = W.T.dot(dZ)
     
@@ -218,12 +237,12 @@ def predict(X, y, parameters):
     
     # Forward propagation
     probas, caches ,Ds= L_model_forward(X, parameters)
-    y_probas = (probas > 0.5)
-    y_hat = y_probas*1
+    y_hat = np.argmax(probas.T,axis=1)
+    y = np.argmax(y.T,axis=1)
     # convert probas to 0/1 predictions  
     accuracy = (y_hat == y).mean()	 
    
-    return accuracy * 100
+    return accuracy * 100,y_hat
 
 def random_mini_batches(X, Y, mini_batch_size = 64, seed = 0):
     
@@ -348,8 +367,8 @@ def L_layer_model(X, Y, layers_dims,optimizer = "gd", learning_rate = 0.001, num
             AL, caches,Ds =L_model_forward(minibatch_X,parameters,keep_prob)       
         
             # Compute cost.                  
-            cost_total += compute_cost(AL,minibatch_Y)
-           
+          #  cost_total += compute_cost(AL,minibatch_Y)
+            cost_total += compute_cost_with_regularization(AL,minibatch_Y, parameters)
             # Backward propagation.      
             grads = L_model_backward(AL,minibatch_Y,caches,Ds,keep_prob)    
  
@@ -396,5 +415,12 @@ accuracy = predict(X_val.T,y_val.T,parameters)
 print("Accuracy in validation Set " + str(accuracy))
 
 #Predicting On Test set
-accuracy = predict(X_test.T,y_test.T,parameters)
+accuracy ,y_hat= predict(X_test.T,y_test.T,parameters)
 print("Accuracy in Test Set " + str(accuracy))
+
+"""
+Accuracy in Training Set (99.64848484848486)
+Accuracy in validation Set (97.67619047619047)
+Accuracy in Test Set 97.77
+
+"""
